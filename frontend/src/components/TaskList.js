@@ -1,56 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { Card, Button, Row, Col } from 'react-bootstrap';
-
+import { useInterval } from 'react-use';
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
-
-  const fetchTasks = async () => {
-    try {
-      const response = await axios.get('/api/tasks');
-      setTasks(response.data);
-    } catch (error) {
-      setError('Error fetching tasks !', error);
-    }
-  };
+  const intervalId = useInterval(() => {
+    axios.get('/api/tasks')
+      .then(response => {
+        setTasks(response.data);
+      }).catch(error => {
+        setError('Error fetching tasks !', error);
+      });
+  }, 1000);
 
   const handleDeleteTask = async (taskId) => {
-    try {
-      await axios.delete(`/api/tasks/${taskId}`);
-
-      setTasks(tasks.filter((task) => task._id !== taskId));
-    } catch (error) {
-      setError('Error deleting task !', error.message);
-    }
+    axios.delete(`/api/tasks/${taskId}`)
+      .then(setTasks(tasks.filter((task) => task._id !== taskId)))
+      .catch(error => {
+        setError('Error deleting task !', error.message);
+      });
   };
 
   const handleUpdateStatus = async (taskId, newStatus) => {
-
-    try {
-      const response = await axios.put(`/api/tasks/${taskId}`, { status: newStatus });
-      const updatedTask = response.data;
-
-      setTasks((prevTasks) =>
-        prevTasks.map((task) => {
-          if (task._id === taskId) {
-            return { ...task, status: updatedTask.status };
-          }
-          return task;
-        })
-      );
-    } catch (error) {
-      setError('Error updating task status !', error.message);
-    }
+    axios.put(`/api/tasks/${taskId}`, { status: newStatus })
+      .then(response => {
+        const updatedTask = response.data;
+        setTasks((prevTasks) =>
+          prevTasks.map((task) => {
+            if (task._id === taskId) {
+              return { ...task, status: updatedTask.status };
+            }
+            return task;
+          })
+        );
+      }).catch(error => {
+        setError('Error updating task status !', error.message);
+      })
   };
 
   if (error) {
     return <p className="text-center bg-danger text-white py-3 rounded-4">{error}</p>;
+  }
+
+  if (tasks.length === 0) {
+    return <p className="text-center bg-danger text-white py-3 rounded-4">No tasks to show !</p>;
   }
 
   return (

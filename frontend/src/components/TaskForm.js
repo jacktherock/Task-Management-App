@@ -26,40 +26,34 @@ const TaskForm = () => {
 
         if (!title) {
             setError('Title is required !');
+            setTimeout(() => {
+                setError('');
+            }, 2000);
             return;
         }
-        
+
         const newTask = {
             title,
             description,
             status,
         };
 
-        try {
-            const response = await axios.post('/api/tasks', newTask);
-            // console.log(response.data);
-            setTitle('');
-            setDescription('');
-            setStatus('Incomplete');
-            setSuccessMessage('Task added successfully !');
-
-            setTimeout(() => {
-                setSuccessMessage('');
-            }, 2000);
-
-        } catch (error) {
-            if (error.response) {
-                setError('Error !' + error.response.data.error);
-            } else if (error.request) {
-                setError('No response received !');
-            } else {
-                setError('Error during request !' + error.message);
+        axios.post('/api/tasks', newTask).then(
+            response => {
+                setTitle('');
+                setDescription('');
+                setStatus('Incomplete');
+                setSuccessMessage(response.data);
+                setTimeout(() => {
+                    setSuccessMessage('');
+                }, 2000);
             }
-
+        ).catch(error => {
+            setError('Error during request !' + error);
             setTimeout(() => {
                 setError('');
             }, 2000);
-        }
+        });
     };
 
     return (
